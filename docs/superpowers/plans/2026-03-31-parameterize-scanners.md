@@ -6,7 +6,7 @@
 
 **Architecture:** A Python package (`check_supplychain`) with a `VersionSpec` class for version matching, a scanner-per-ecosystem pattern with a shared registry, and an argparse-based CLI entry point. TDD throughout — each component is tested before the next is built.
 
-**Tech Stack:** Python 3.10+, `packaging` library, `pytest` for testing, stdlib `pathlib`/`os`/`json` for filesystem scanning.
+**Tech Stack:** Python 3.10+, `uv` for package management, `packaging` library, `pytest` for testing, stdlib `pathlib`/`os`/`json` for filesystem scanning.
 
 ---
 
@@ -29,15 +29,23 @@
 
 ---
 
-### Task 1: Project scaffolding
+### Task 1: Project scaffolding with uv
 
 **Files:**
+- Create: `pyproject.toml`
 - Create: `check_supplychain/__init__.py`
 - Create: `check_supplychain/scanners/__init__.py`
 - Create: `tests/__init__.py`
 
-- [ ] **Step 1: Create package directories and empty init files**
+- [ ] **Step 1: Initialize project with uv and add dependencies**
 
+```bash
+uv init --lib --name check-supplychain
+uv add packaging
+uv add --dev pytest
+```
+
+Then create the package directories:
 ```bash
 mkdir -p check_supplychain/scanners tests
 ```
@@ -57,14 +65,14 @@ SCANNERS = {}
 
 - [ ] **Step 2: Verify pytest discovers the package**
 
-Run: `python3 -m pytest tests/ -v --collect-only`
+Run: `uv run pytest tests/ -v --collect-only`
 Expected: "no tests ran" (but no import errors)
 
 - [ ] **Step 3: Commit**
 
 ```bash
-git add check_supplychain/ tests/
-git commit -m "scaffold: create check_supplychain package and test directory"
+git add pyproject.toml uv.lock check_supplychain/ tests/
+git commit -m "scaffold: init uv project with check_supplychain package"
 ```
 
 ---
@@ -109,7 +117,7 @@ def test_multiple_exact_versions_no_match():
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `python3 -m pytest tests/test_version_spec.py -v`
+Run: `uv run pytest tests/test_version_spec.py -v`
 Expected: FAIL with ImportError (version_spec.py doesn't exist yet)
 
 - [ ] **Step 3: Implement VersionSpec with exact matching**
@@ -171,7 +179,7 @@ class VersionSpec:
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `python3 -m pytest tests/test_version_spec.py -v`
+Run: `uv run pytest tests/test_version_spec.py -v`
 Expected: 5 passed
 
 - [ ] **Step 5: Commit**
@@ -233,7 +241,7 @@ def test_bare_version_in_operator_context():
 
 - [ ] **Step 2: Run tests to verify new tests fail (or pass — implementation may already handle this)**
 
-Run: `python3 -m pytest tests/test_version_spec.py -v`
+Run: `uv run pytest tests/test_version_spec.py -v`
 Expected: All 11 tests PASS (the implementation from Task 2 already handles operators)
 
 - [ ] **Step 3: Commit**
@@ -307,7 +315,7 @@ def test_normalizes_package_name(tmp_path):
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `python3 -m pytest tests/test_python_scanner.py -v`
+Run: `uv run pytest tests/test_python_scanner.py -v`
 Expected: FAIL with ImportError
 
 - [ ] **Step 3: Implement python_scanner**
@@ -384,7 +392,7 @@ SCANNERS = {
 
 - [ ] **Step 5: Run tests to verify they pass**
 
-Run: `python3 -m pytest tests/test_python_scanner.py -v`
+Run: `uv run pytest tests/test_python_scanner.py -v`
 Expected: 4 passed
 
 - [ ] **Step 6: Commit**
@@ -456,7 +464,7 @@ def test_finds_scoped_package(tmp_path):
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `python3 -m pytest tests/test_npm_scanner.py -v`
+Run: `uv run pytest tests/test_npm_scanner.py -v`
 Expected: FAIL with ImportError
 
 - [ ] **Step 3: Implement npm_scanner**
@@ -524,7 +532,7 @@ SCANNERS = {
 
 - [ ] **Step 5: Run tests to verify they pass**
 
-Run: `python3 -m pytest tests/test_npm_scanner.py -v`
+Run: `uv run pytest tests/test_npm_scanner.py -v`
 Expected: 4 passed
 
 - [ ] **Step 6: Commit**
@@ -591,7 +599,7 @@ def test_handles_missing_cellar(tmp_path):
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `python3 -m pytest tests/test_brew_scanner.py -v`
+Run: `uv run pytest tests/test_brew_scanner.py -v`
 Expected: FAIL with ImportError
 
 - [ ] **Step 3: Implement brew_scanner**
@@ -637,7 +645,7 @@ SCANNERS = {
 
 - [ ] **Step 5: Run tests to verify they pass**
 
-Run: `python3 -m pytest tests/test_brew_scanner.py -v`
+Run: `uv run pytest tests/test_brew_scanner.py -v`
 Expected: 4 passed
 
 - [ ] **Step 6: Commit**
@@ -659,15 +667,13 @@ git commit -m "feat: add Homebrew scanner for Cellar packages"
 
 `tests/test_cli.py`:
 ```python
-import json
 import subprocess
-import sys
 from pathlib import Path
 
 
 def _run_cli(*args: str) -> subprocess.CompletedProcess:
     return subprocess.run(
-        [sys.executable, "-m", "check_supplychain", *args],
+        ["uv", "run", "python", "-m", "check_supplychain", *args],
         capture_output=True,
         text=True,
         cwd=str(Path(__file__).parent.parent),
@@ -699,7 +705,7 @@ def test_invalid_scanner_rejected():
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `python3 -m pytest tests/test_cli.py -v`
+Run: `uv run pytest tests/test_cli.py -v`
 Expected: FAIL (no __main__.py yet)
 
 - [ ] **Step 3: Implement __main__.py**
@@ -750,12 +756,12 @@ if __name__ == "__main__":
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `python3 -m pytest tests/test_cli.py -v`
+Run: `uv run pytest tests/test_cli.py -v`
 Expected: 4 passed
 
 - [ ] **Step 5: Run full test suite**
 
-Run: `python3 -m pytest tests/ -v`
+Run: `uv run pytest tests/ -v`
 Expected: All 17 tests pass
 
 - [ ] **Step 6: Commit**
@@ -786,7 +792,7 @@ Update `CLAUDE.md` to describe the Python package structure, CLI usage, how to r
 
 - [ ] **Step 3: Run full test suite one final time**
 
-Run: `python3 -m pytest tests/ -v`
+Run: `uv run pytest tests/ -v`
 Expected: All 17 tests pass
 
 - [ ] **Step 4: Commit**
